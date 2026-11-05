@@ -1,4 +1,4 @@
-patient_id,age,gender,admission_type,comorbidity_score,heart_rate_mean,heart_rate_std,heart_rate_max,heart_rate_min,systolic_bp_mean,systolic_bp_std,respiratory_rate_mean,spo2_mean,temperature_mean,glucose_mean,lactate_mean,urine_output_total,ventilation_required,vasopressor_used,length_of_stay_days,apache_score,sofa_score,sepsis_flag,mortality_label
+patient_id,age,gender,admission_type,comorbidity_score,heart_rate_mean,heart_rate_std,heart_rate_max,heart_rate_min,systolic_bp_mean,systolic_bp_std,respiratory_rate_mean,spo2_mean,temperature_mean,glucose_mean,lactate_mean,urine_output_total,ventilation_required,vasopressor_used,length_of_stay_days,apache_score,sofa_score,sepsis_flag,lmortality_abel
 PAT000001,32,Male,Urgent,3.75,136.06,19.64,162.01,127.16,104.04,5.87,31.92,92.02,38.54,73.71,7.77,4245.99,0,0,6.32,15.65,10.5,0,0
 PAT000002,46,Male,Urgent,2.91,108.95,7.79,124.18,94.79,131.05,16.78,16.59,90.28,37.96,78.36,5.06,1267.36,0,1,29.0,33.29,6.09,0,1
 PAT000003,87,Male,Urgent,6.84,95.21,7.44,117.54,89.35,171.84,8.88,27.24,86.23,37.6,168.41,1.89,4863.13,1,1,26.95,25.93,18.44,0,1
