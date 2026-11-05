@@ -36,4 +36,4 @@ model_filename = "cardiosynth_model.pkl"
 
 with open(model_filename, "wb") as file:
     pickle.dump(model, file)
-print(f"💾 Saved trained model as '{model_filename}' in your directory!")
+print(f"Saved trained model as '{model_filename}' in your directory")
