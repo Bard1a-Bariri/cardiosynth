@@ -24,5 +24,49 @@ drop_cols = ["mortality_label", "patient_id", "id", "ID"]
 features_df = df.drop(columns=[c for c in drop_cols if c in df.columns], errors="ignore")
 
 st.sidebar.header("🕹️ Simulation Controls")
-start_stream = st.sidebar.button("▶️ Start Live Patient Stream", type="primary")
+start_stream = st.sidebar.button("Start Live Patient Stream", type="primary")
 speed = st.sidebar.slider("Streaming Speed (seconds per update)", 0.5, 3.0, 1.0)
+
+dashboard_container = st.empty()
+
+if start_stream:
+    for index, row in features_df.iterrows():
+        single_patient_data = pd.Datafrane([row])
+        risk_list = model.predict(single_patient_data)
+        percent = float(risk_list[0][1]) * 100
+
+        with dashboard_container.container:
+            st.markdown(f"Analyzing Patient Unit ID: {index + 1042}")
+
+            col1, col2, col3, col4 = st.columns(4)
+
+            hr_col = [c for c in features_df.columns if 'heart' in c.lower()]
+            bp_col = [c for c in features_df.columns if 'bp' in c.lower() or 'sys' in c.lower() or 'blood' in c.lower()]
+            temp_col = [c for c in features_df.columns if 'temp' in c.lower()]
+            spo2_col = [c for c in features_df.columns if 'spo2' in c.lower() or 'ox' in c.lower()]
+            
+            with col1:
+                val = f"{row[hr_col[0]]:.1f} bpm" if hr_col else "85.0 bpm"
+                st.metric(label="Heart Rate", value=val)
+            with col2:
+                val = val = f"{row[bp_col[0]]:.1f} mmHg" if bp_col else "118 mmHg"
+                st.metric(label="Systolic Blood Pressure", value=val)
+            with col3:
+                val = f"{row[temp_col[0]]:.1f} °C" if temp_col else "36.9 °C"
+                st.metric(label="Temprature", value=val)
+            with col4:
+                val = f"{row[spo2_col[0]]:.1f} %" if spo2_col else "98.2%"
+            st.markdown("CardioSynth Risk Probability: **{percent:.1f}%** chance of deterioration")
+
+            if percent >= 65:
+                st.error("CRITICAL WARNING: High risk of clinical deterioration ({percent:.1f}%). High medical priority.")
+            elif percent >= 40:
+                st.warning("HIGH RISK: Modest clinical instability found ({percent:.1f}%). Increase nursing checks.")
+            else: 
+                st.success("STABLE: Patient metrics are within healthy ranges ({percent:.1f}%).")
+            
+            time.sleep(speed)
+else:
+    with dashboard_container.container():
+        st.info('Click the "Start Live Patient Stream" in the left sidebar to begin processing clinical data.')
+        
