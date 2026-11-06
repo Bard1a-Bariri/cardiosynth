@@ -31,7 +31,7 @@ dashboard_container = st.empty()
 
 if start_stream:
     for index, row in features_df.iterrows():
-        single_patient_data = pd.Datafrane([row])
+        single_patient_data = pd.DataFrane([row])
         risk_list = model.predict(single_patient_data)
         percent = float(risk_list[0][1]) * 100
 
