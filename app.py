@@ -30,11 +30,9 @@ speed = st.sidebar.slider("Streaming Speed (seconds per update)", 0.5, 3.0, 1.0)
 dashboard_container = st.empty()
 
 if start_stream:
+    processed_features = pd.get_dummies(features_df, columns=['gender', 'admission_type'], drop_first=True)
     for index, row in features_df.iterrows():
-        single_patient_data = pd.DataFrame([row])
-        for col in ["gender", "admission_type"]:
-            if col in single_patient_data.columns:
-                single_patient_data[col] = single_patient_data[col].astype("category").cat.codes
+        single_patient_data = processed_features.iloc[[index]]
         risk_list = model.predict_proba(single_patient_data)
         percent = float(risk_list[0][1]) * 100
 
