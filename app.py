@@ -63,7 +63,7 @@ if st.session_state.is_running:
         patient_id = idx + 1042
 
         if percent >= 65:
-            log_msg = f"**Bed #{patient_id}**: CRITICAL Alert ({percent:.1f}%). Rapid response paged."
+            log_msg = f"**Bed #{patient_id}**: CRITICAL Alert ({percent:.1f}%). Rapid Response Team paged."
             if log_msg not in st.session_state.clinical_log:
                 st.session_state.clinical_log.insert(0, log_msg)
         elif percent >= 40:
