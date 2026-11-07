@@ -7,6 +7,11 @@ st.set_page_config("CardioSynth ICU Momnitor", layout="wide")
 st.title("🫀 CardioSynth | Live ICU Deterioration Monitor")
 st.markdown("### Real-time Predictive Clinical Early warning System")
 
+if "current_index" not in st.session_state:
+    st.session_state.current_index = 0
+if "is_running" not in st.session_state:
+    st.session_state.is_running = False
+
 @st.cache_resource
 def load_model():
     with open("cardiosynth_model.pkl", "rb") as file:
@@ -24,12 +29,19 @@ drop_cols = ["mortality_label", "lmortality_label", "patient_id", "id", "ID"]
 features_df = df.drop(columns=[c for c in drop_cols if c in df.columns], errors="ignore")
 
 st.sidebar.header("🕹️ Simulation Controls")
-start_stream = st.sidebar.button("Start Live Patient Stream", type="primary")
 speed = st.sidebar.slider("Streaming Speed (seconds per update)", 0.5, 3.0, 1.0)
+if st.session_state.is_running:
+    if start_stream = st.sidebar.button("Start Live Patient Stream", type="primary"):
+        st.session_state.is_running = True
+        st.rerun()
+else:
+    if st.sidebar.button("Pause Live Stream", type="secondary"):
+        st.session_state.is_running = False
+        st.rerun()
 
 dashboard_container = st.empty()
 
-if start_stream:
+if st.session_state.is_running:
     processed_features = pd.get_dummies(features_df, columns=['gender', 'admission_type'], drop_first=True)
     expected_cols = [
         'age', 'comorbidity_score', 'heart_rate_mean', 'heart_rate_std', 'heart_rate_max', 'heart_rate_min', 
@@ -39,13 +51,16 @@ if start_stream:
         'admission_type_Emergency', 'admission_type_Urgent'
     ]
     processed_features = processed_features.reindex(columns=expected_cols, fill_value=0)
-    for index, row in features_df.iterrows():
-        single_patient_data = processed_features.iloc[[index]]
+    
+    while st.session_state.current_index < len(features_df) and st.session_state.is_running:
+        idx = st.session_state.current_index
+        row = features_df.iloc[idx]
+        single_patient_data = processed_features.iloc[[idx]]
         risk_list = model.predict_proba(single_patient_data)
         percent = float(risk_list[0][1]) * 100
 
-        with dashboard_container.container():
-            st.markdown(f"Analyzing Patient Unit ID: #{index + 1042}")
+        with dashboard_container.container():  
+            st.markdown(f"Analyzing Patient Unit ID: #{idx + 1042}")
 
             col1, col2, col3, col4 = st.columns(4)
 
@@ -58,13 +73,15 @@ if start_stream:
                 val = f"{row[hr_col[0]]:.1f} bpm" if hr_col else "85.0 bpm"
                 st.metric(label="Heart Rate", value=val)
             with col2:
-                val = val = f"{row[bp_col[0]]:.1f} mmHg" if bp_col else "118 mmHg"
+                val = f"{row[bp_col[0]]:.1f} mmHg" if bp_col else "118 mmHg"
                 st.metric(label="Systolic Blood Pressure", value=val)
             with col3:
                 val = f"{row[temp_col[0]]:.1f} °C" if temp_col else "36.9 °C"
-                st.metric(label="Temprature", value=val)
+                st.metric(label="Temperature", value=val)
             with col4:
                 val = f"{row[spo2_col[0]]:.1f} %" if spo2_col else "98.2%"
+                st.metric(label="SpO2 Oxygen", value=val) 
+
             st.markdown(f"CardioSynth Risk Probability: **{percent:.1f}%** chance of deterioration")
 
             if percent >= 65:
@@ -74,8 +91,40 @@ if start_stream:
             else: 
                 st.success(f"STABLE: Patient metrics are within healthy ranges ({percent:.1f}%).")
             
-            time.sleep(speed)
+        st.session_state.current_index += 1
+        if not st.session_state.is_running:
+            break
+        time.sleep(speed)
+        
+    if st.session_state.current_index >= len(features_df):
+        st.session_state.is_running = False
+        st.session_state.current_index = 0
+        st.rerun()
 else:
-    with dashboard_container.container():
-        st.info('Click the "Start Live Patient Stream" in the left sidebar to begin processing clinical data.')
+    if st.session_state.current_index > 0:
+        idx = st.session_state.current_index - 1
+        row = features_df.iloc[idx]
+        single_patient_data = processed_features.iloc[[idx]]
+        risk_list = model.predict_proba(single_patient_data)
+        percent = float(risk_list[0][1]) * 100
+        
+        with dashboard_container.container():
+            st.markdown(f"## MONITOR PAUSED // Patient Unit ID: #{idx + 1042}")
+            col1, col2, col3, col4 = st.columns(4)
+            hr_col = [c for c in features_df.columns if 'heart' in c.lower()]
+            bp_col = [c for c in features_df.columns if 'bp' in c.lower() or 'sys' in c.lower() or 'blood' in c.lower()]
+            temp_col = [c for c in features_df.columns if 'temp' in c.lower()]
+            spo2_col = [c for c in features_df.columns if 'spo2' in c.lower() or 'ox' in c.lower()]
+            with col1: st.metric(label="Heart Rate", value=f"{row[hr_col[0]]:.1f} bpm" if hr_col else "85.0 bpm")
+            with col2: st.metric(label="Systolic Blood Pressure", value=f"{row[bp_col[0]]:.1f} mmHg" if bp_col else "118 mmHg")
+            with col3: st.metric(label="Temperature", value=f"{row[temp_col[0]]:.1f} °C" if temp_col else "36.9 °C")
+            with col4: st.metric(label="SpO2 Oxygen", value=f"{row[spo2_col[0]]:.1f} %" if spo2_col else "98.2%")
+            st.markdown("---")
+            st.markdown(f"CardioSynth Risk Probability: **{percent:.1f}%** chance of deterioration")
+            if percent >= 65: st.error(f"CRITICAL WARNING: High risk of clinical deterioration ({percent:.1f}%). High medical priority.")
+            elif percent >= 40: st.warning(f"HIGH RISK: Modest clinical instability found ({percent:.1f}%). Increase nursing checks.")
+            else: st.success(f"STABLE: Patient metrics are within healthy ranges ({percent:.1f}%).")
+    else:
+        with dashboard_container.container():
+            st.info('Click the "Start Live Patient Stream" in the left sidebar to begin processing clinical data.')
         
