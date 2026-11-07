@@ -32,7 +32,10 @@ dashboard_container = st.empty()
 if start_stream:
     for index, row in features_df.iterrows():
         single_patient_data = pd.DataFrame([row])
-        risk_list = model.predict(single_patient_data)
+        for col in ["gender", "admission_type"]:
+            if col in single_patient_data.columns:
+                single_patient_data[col] = single_patient_data[col].astype("category").cat.codes
+        risk_list = model.predict_proba(single_patient_data)
         percent = float(risk_list[0][1]) * 100
 
         with dashboard_container.container():
