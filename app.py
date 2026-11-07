@@ -44,7 +44,6 @@ monitor_column, log_column = st.columns([2.2, 1])
 with monitor_column:
     dashboard_container = st.empty()
 
-if st.session_state.is_running:
     processed_features = pd.get_dummies(features_df, columns=['gender', 'admission_type'], drop_first=True)
     expected_cols = [
         'age', 'comorbidity_score', 'heart_rate_mean', 'heart_rate_std', 'heart_rate_max', 'heart_rate_min', 
@@ -54,13 +53,14 @@ if st.session_state.is_running:
         'admission_type_Emergency', 'admission_type_Urgent'
     ]
     processed_features = processed_features.reindex(columns=expected_cols, fill_value=0)
-    
+if st.session_state.is_running:   
     while st.session_state.current_index < len(features_df) and st.session_state.is_running:
         idx = st.session_state.current_index
         row = features_df.iloc[idx]
         single_patient_data = processed_features.iloc[[idx]]
         risk_list = model.predict_proba(single_patient_data)
         percent = float(risk_list[0][1]) * 100
+        patient_id = idx + 1042
 
         if percent >= 65:
             log_msg = f"**Bed #{patient_id}**: CRITICAL Alert ({percent:.1f}%). Rapid response paged."
@@ -72,7 +72,7 @@ if st.session_state.is_running:
                 st.session_state.clinical_log.insert(0, log_msg)
 
         with dashboard_container.container():  
-            st.markdown(f"Analyzing Patient Unit ID: #{idx + 1042}")
+            st.markdown(f"Analyzing Patient Unit ID: #{patient_id}")
 
             col1, col2, col3, col4 = st.columns(4)
 
@@ -131,7 +131,6 @@ else:
             with col2: st.metric(label="Systolic Blood Pressure", value=f"{row[bp_col[0]]:.1f} mmHg" if bp_col else "118 mmHg")
             with col3: st.metric(label="Temperature", value=f"{row[temp_col[0]]:.1f} °C" if temp_col else "36.9 °C")
             with col4: st.metric(label="SpO2 Oxygen", value=f"{row[spo2_col[0]]:.1f} %" if spo2_col else "98.2%")
-            st.markdown("---")
             st.markdown(f"CardioSynth Risk Probability: **{percent:.1f}%** chance of deterioration")
             if percent >= 65: st.error(f"CRITICAL WARNING: High risk of clinical deterioration ({percent:.1f}%). High medical priority.")
             elif percent >= 40: st.warning(f"HIGH RISK: Modest clinical instability found ({percent:.1f}%). Increase nursing checks.")
