@@ -20,7 +20,7 @@ def load_stream_data():
 
 df = load_stream_data()
 
-drop_cols = ["mortality_label", "patient_id", "id", "ID"]
+drop_cols = ["mortality_label", "lmortality_label", "patient_id", "id", "ID"]
 features_df = df.drop(columns=[c for c in drop_cols if c in df.columns], errors="ignore")
 
 st.sidebar.header("🕹️ Simulation Controls")
@@ -31,6 +31,14 @@ dashboard_container = st.empty()
 
 if start_stream:
     processed_features = pd.get_dummies(features_df, columns=['gender', 'admission_type'], drop_first=True)
+    expected_cols = [
+        'age', 'comorbidity_score', 'heart_rate_mean', 'heart_rate_std', 'heart_rate_max', 'heart_rate_min', 
+        'systolic_bp_mean', 'systolic_bp_std', 'respiratory_rate_mean', 'spo2_mean', 'temperature_mean', 
+        'glucose_mean', 'lactate_mean', 'urine_output_total', 'ventilation_required', 'vasopressor_used', 
+        'length_of_stay_days', 'apache_score', 'sofa_score', 'sepsis_flag', 'gender_Male', 
+        'admission_type_Emergency', 'admission_type_Urgent'
+    ]
+    processed_features = processed_features.reindex(columns=expected_cols, fill_value=0)
     for index, row in features_df.iterrows():
         single_patient_data = processed_features.iloc[[index]]
         risk_list = model.predict_proba(single_patient_data)
