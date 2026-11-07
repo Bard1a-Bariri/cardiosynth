@@ -6,6 +6,9 @@ import pickle
 
 print("Fetching data...")
 df = pd.read_csv("icu_mortality_prediction.csv", sep=None, engine='python')
+for col in ["gender", "admission_type"]:
+    if col in df.columns:
+        df[col] = df[col].astype("category").cat.codes
 df.columns = df.columns.str.strip()
 target_label= df.columns[-1]
 df = df.drop(columns=['patient_id'], errors='ignore')
