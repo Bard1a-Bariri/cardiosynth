@@ -13,7 +13,7 @@ if "is_running" not in st.session_state:
     st.session_state.is_running = False
 if "clinical_log" not in st.session_state:
     st.session_state.clinical_log = []
-    
+
 @st.cache_resource
 def load_model():
     with open("cardiosynth_model.pkl", "rb") as file:
@@ -32,7 +32,7 @@ features_df = df.drop(columns=[c for c in drop_cols if c in df.columns], errors=
 
 st.sidebar.header("🕹️ Simulation Controls")
 speed = st.sidebar.slider("Streaming Speed (seconds per update)", 0.5, 3.0, 1.0)
-if st.session_state.is_running:
+if not st.session_state.is_running:
     if st.sidebar.button("Start Live Patient Stream", type="primary"):
         st.session_state.is_running = True
         st.rerun()
