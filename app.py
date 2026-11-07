@@ -11,7 +11,9 @@ if "current_index" not in st.session_state:
     st.session_state.current_index = 0
 if "is_running" not in st.session_state:
     st.session_state.is_running = False
-
+if "clinical_log" not in st.session_state:
+    st.session_state.clinical_log = []
+    
 @st.cache_resource
 def load_model():
     with open("cardiosynth_model.pkl", "rb") as file:
@@ -31,15 +33,16 @@ features_df = df.drop(columns=[c for c in drop_cols if c in df.columns], errors=
 st.sidebar.header("🕹️ Simulation Controls")
 speed = st.sidebar.slider("Streaming Speed (seconds per update)", 0.5, 3.0, 1.0)
 if st.session_state.is_running:
-    if start_stream = st.sidebar.button("Start Live Patient Stream", type="primary"):
+    if st.sidebar.button("Start Live Patient Stream", type="primary"):
         st.session_state.is_running = True
         st.rerun()
 else:
     if st.sidebar.button("Pause Live Stream", type="secondary"):
         st.session_state.is_running = False
         st.rerun()
-
-dashboard_container = st.empty()
+monitor_column, log_column = st.columns([2.2, 1])
+with monitor_column:
+    dashboard_container = st.empty()
 
 if st.session_state.is_running:
     processed_features = pd.get_dummies(features_df, columns=['gender', 'admission_type'], drop_first=True)
@@ -58,6 +61,15 @@ if st.session_state.is_running:
         single_patient_data = processed_features.iloc[[idx]]
         risk_list = model.predict_proba(single_patient_data)
         percent = float(risk_list[0][1]) * 100
+
+        if percent >= 65:
+            log_msg = f"**Bed #{patient_id}**: CRITICAL Alert ({percent:.1f}%). Rapid response paged."
+            if log_msg not in st.session_state.clinical_log:
+                st.session_state.clinical_log.insert(0, log_msg)
+        elif percent >= 40:
+            log_msg = f"**Bed #{patient_id}**: Elevated Risk ({percent:.1f}%). Nurse flagged."
+            if log_msg not in st.session_state.clinical_log:
+                st.session_state.clinical_log.insert(0, log_msg)
 
         with dashboard_container.container():  
             st.markdown(f"Analyzing Patient Unit ID: #{idx + 1042}")
@@ -127,4 +139,12 @@ else:
     else:
         with dashboard_container.container():
             st.info('Click the "Start Live Patient Stream" in the left sidebar to begin processing clinical data.')
-        
+with log_column:
+    st.markdown("### Nurse Audit Log")
+    st.markdown("*Automated actions logged by model risk tracking:*")
+    st.markdown("---")
+    if st.session_state.clinical_log:
+        for entry in st.session_state.clinical_log:
+            st.markdown(entry)
+    else:
+        st.caption("Awaiting clinical alerts... Critical actions will appear here.")   
