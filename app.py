@@ -35,8 +35,8 @@ if start_stream:
         risk_list = model.predict(single_patient_data)
         percent = float(risk_list[0][1]) * 100
 
-        with dashboard_container.container:
-            st.markdown(f"Analyzing Patient Unit ID: {index + 1042}")
+        with dashboard_container.container():
+            st.markdown(f"Analyzing Patient Unit ID: #{index + 1042}")
 
             col1, col2, col3, col4 = st.columns(4)
 
@@ -56,14 +56,14 @@ if start_stream:
                 st.metric(label="Temprature", value=val)
             with col4:
                 val = f"{row[spo2_col[0]]:.1f} %" if spo2_col else "98.2%"
-            st.markdown("CardioSynth Risk Probability: **{percent:.1f}%** chance of deterioration")
+            st.markdown(f"CardioSynth Risk Probability: **{percent:.1f}%** chance of deterioration")
 
             if percent >= 65:
-                st.error("CRITICAL WARNING: High risk of clinical deterioration ({percent:.1f}%). High medical priority.")
+                st.error(f"CRITICAL WARNING: High risk of clinical deterioration ({percent:.1f}%). High medical priority.")
             elif percent >= 40:
-                st.warning("HIGH RISK: Modest clinical instability found ({percent:.1f}%). Increase nursing checks.")
+                st.warning(f"HIGH RISK: Modest clinical instability found ({percent:.1f}%). Increase nursing checks.")
             else: 
-                st.success("STABLE: Patient metrics are within healthy ranges ({percent:.1f}%).")
+                st.success(f"STABLE: Patient metrics are within healthy ranges ({percent:.1f}%).")
             
             time.sleep(speed)
 else:

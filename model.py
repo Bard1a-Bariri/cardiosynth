@@ -12,7 +12,6 @@ for col in ["gender", "admission_type"]:
 df.columns = df.columns.str.strip()
 target_label= df.columns[-1]
 df = df.drop(columns=['patient_id'], errors='ignore')
-df = pd.get_dummies(df, columns=['gender', 'admission_type'], drop_first=True)
 model = xgb.XGBClassifier(
     n_estimators=150,
     max_depth = 5,
